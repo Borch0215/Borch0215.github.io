@@ -1,0 +1,1086 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Cableworld — Dashboard</title>
+  <meta name="description" content="Dashboard profesional para agentes de Cableworld: manuales, tutoriales, soporte técnico y gestión de conocimiento.">
+  <meta name="theme-color" content="#ff7a00">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text x='0' y='14' font-size='14' fill='%23ff7a00'>⚙️</text></svg>" type="image/svg+xml">
+  <link rel="stylesheet" href="../css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
+  <script>
+    // Configure pdf.js worker
+    if (typeof pdfjsLib !== 'undefined') {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+  </script>
+</head>
+<body class="cw-root">
+  <div class="app" id="app">
+    <aside class="sidebar hidden" role="navigation" aria-label="Navegación principal">
+      <div class="brand">
+        <h1 class="brand-name">Cableworld Dashboard</h1>
+      </div>
+      <nav class="nav">
+        <ul>
+          <li><button data-nav="dashboard" class="active">Dashboard</button></li>
+          <li><button data-nav="manuals">Manuales</button></li>
+          <li><button data-nav="fibra">Fibra</button></li>
+          <li><button data-nav="history">Historial</button></li>
+          <li><button data-nav="faqs">FAQs</button></li>
+          <li><button data-nav="settings">Ajustes</button></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <main class="main hidden" role="main">
+      <header class="topbar">
+        <div class="search-wrap">
+          <label for="search" class="visually-hidden">Buscar manuales</label>
+          <input id="search" type="search" placeholder="Buscar manuales, códigos de error, soluciones..." aria-label="Buscar manuales" autocomplete="off">
+          <div id="autocomplete" class="autocomplete" role="listbox" aria-label="Sugerencias de búsqueda"></div>
+        </div>
+        <div class="top-actions">
+          <button id="notificationsBtn" class="icon-btn" aria-label="Notificaciones" title="Notificaciones">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 17H9v-6a6 6 0 1 1 12 0v6h-6z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path><path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            <span id="notifCount" class="badge hidden">0</span>
+          </button>
+          <button id="helpBtn" class="icon-btn" aria-label="Ayuda rápida" title="Ayuda y atajos">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9.09 9a3 3 0 1 1 5.82 1c0 2-3 3-3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.4"></circle></svg>
+          </button>
+          <div class="divider"></div>
+          <button id="toggleAgentMode" class="agent-toggle" title="Alternar modo agente">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></circle></svg>
+            <span>Modo agente</span>
+          </button>
+          <button id="logoutBtn" class="icon-btn" aria-label="Cerrar sesión" title="Cerrar sesión o cambiar cuenta">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M19 12H5m14 0l-4-4m4 4l-4 4M19 6H7a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </button>
+        </div>
+      </header>
+
+      <section class="content" id="content" aria-live="polite">
+        <div class="canvas" id="canvas">
+          <!-- Dashboard Overview Panel -->
+          <article id="dashboardView" class="panel hidden">
+            <div class="panel-header">
+              <div>
+                <h2>Dashboard de Cableworld</h2>
+                <p class="subtitle">Resumen y estadísticas de tu actividad</p>
+              </div>
+              <button id="refreshDashboardBtn" class="icon-btn" title="Actualizar estadísticas">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M1 4v6h6M23 20v-6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              </button>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="dashboard-stats-grid">
+              <div class="stat-card">
+                <div class="stat-icon" style="background:linear-gradient(135deg, #fcd34d, #f59e0b)">📖</div>
+                <div class="stat-content">
+                  <div class="stat-value" id="totalManualsWidget">0</div>
+                  <div class="stat-label">Manuales disponibles</div>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon" style="background:linear-gradient(135deg, #86efac, #22c55e)">✓</div>
+                <div class="stat-content">
+                  <div class="stat-value" id="completedStepsWidget">0</div>
+                  <div class="stat-label">Pasos completados</div>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon" style="background:linear-gradient(135deg, #60a5fa, #3b82f6)">👁️</div>
+                <div class="stat-content">
+                  <div class="stat-value" id="viewedManualsWidget">0</div>
+                  <div class="stat-label">Manuales consultados</div>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon" style="background:linear-gradient(135deg, #f472b6, #ec4899)">💬</div>
+                <div class="stat-content">
+                  <div class="stat-value" id="totalCommentsWidget">0</div>
+                  <div class="stat-label">Notas y comentarios</div>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon" style="background:linear-gradient(135deg, #a78bfa, #8b5cf6)">🌳</div>
+                <div class="stat-content">
+                  <div class="stat-value" id="diagramsCountWidget">0</div>
+                  <div class="stat-label">Árboles de decisión</div>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon" style="background:linear-gradient(135deg, #fb7185, #f43f5e)">📍</div>
+                <div class="stat-content">
+                  <div class="stat-value" id="historyCountWidget">0</div>
+                  <div class="stat-label">Historial (7 últimos)</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recent Activity Section -->
+            <div class="dashboard-section">
+              <h3 style="margin-top:32px;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+                <span style="font-size:20px">📊</span>
+                Actividad reciente
+              </h3>
+              <div id="recentActivityWidget" class="activity-feed">
+                <p style="color:var(--cw-text-muted);text-align:center;padding:20px">No hay actividad aún</p>
+              </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="dashboard-section">
+              <h3 style="margin-top:32px;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+                <span style="font-size:20px">⚡</span>
+                Acciones rápidas
+              </h3>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:12px">
+                <button class="quick-action-btn" data-nav="manuals">
+                  <span style="font-size:24px">📖</span>
+                  <span>Ver manuales</span>
+                </button>
+                <button class="quick-action-btn" data-nav="fibra">
+                  <span style="font-size:24px">🌳</span>
+                  <span>Árboles Fibra</span>
+                </button>
+                <button class="quick-action-btn" data-nav="faqs">
+                  <span style="font-size:24px">❓</span>
+                  <span>FAQs</span>
+                </button>
+                <button class="quick-action-btn" data-nav="history">
+                  <span style="font-size:24px">🕐</span>
+                  <span>Historial</span>
+                </button>
+                <button class="quick-action-btn" data-nav="settings">
+                  <span style="font-size:24px">⚙️</span>
+                  <span>Ajustes</span>
+                </button>
+                <button class="quick-action-btn" id="searchNavigateBtn">
+                  <span style="font-size:24px">🔍</span>
+                  <span>Buscar</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Metrics Section -->
+            <div class="dashboard-section">
+              <h3 style="margin-top:32px;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+                <span style="font-size:20px">📈</span>
+                Estadísticas
+              </h3>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:16px">
+                <div style="padding:16px;background:var(--cw-surface-alt);border-radius:12px;border-left:4px solid var(--cw-primary)">
+                  <div style="font-weight:600;margin-bottom:8px;color:var(--cw-text-muted)">Promedio de pasos/manual</div>
+                  <div style="font-size:24px;font-weight:700;color:var(--cw-text)" id="avgStepsWidget">0</div>
+                </div>
+                <div style="padding:16px;background:var(--cw-surface-alt);border-radius:12px;border-left:4px solid var(--cw-secondary)">
+                  <div style="font-weight:600;margin-bottom:8px;color:var(--cw-text-muted)">Tasa de completación</div>
+                  <div style="font-size:24px;font-weight:700;color:var(--cw-text)" id="completionRateWidget">0%</div>
+                </div>
+                <div style="padding:16px;background:var(--cw-surface-alt);border-radius:12px;border-left:4px solid var(--cw-accent)">
+                  <div style="font-weight:600;margin-bottom:8px;color:var(--cw-text-muted)">Última actualización</div>
+                  <div style="font-size:14px;font-weight:600;color:var(--cw-text)" id="lastActivityWidget">Hace unos momentos</div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article id="welcome" class="panel">
+            <div class="welcome-header">
+              <h2>Bienvenido al Dashboard de Cableworld</h2>
+              <p class="subtitle">Centro integral de conocimiento para agentes de soporte técnico</p>
+            </div>
+            <div class="welcome-grid">
+              <div class="welcome-card">
+                <div class="card-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 19.5h16M6.5 3h11a2.5 2.5 0 0 1 2.5 2.5v10a2.5 2.5 0 0 1-2.5 2.5h-11a2.5 2.5 0 0 1-2.5-2.5v-10a2.5 2.5 0 0 1 2.5-2.5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                </div>
+                <h3>Manuales</h3>
+                <p>Accede a guías paso-a-paso, configuraciones técnicas y soluciones probadas.</p>
+                <button class="small-btn" data-nav="manuals">Explorar</button>
+              </div>
+              <div class="welcome-card">
+                <div class="card-icon accent">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="1" fill="currentColor"></circle><circle cx="19" cy="12" r="1" fill="currentColor"></circle><circle cx="5" cy="12" r="1" fill="currentColor"></circle></svg>
+                </div>
+                <h3>Árboles Fibra</h3>
+                <p>Herramientas interactivas de troubleshooting para diagnósticos rápidos.</p>
+                <button class="small-btn" data-nav="fibra">Ver árboles</button>
+              </div>
+              <div class="welcome-card">
+                <div class="card-icon secondary">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"></circle><path d="M12 8v4l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg>
+                </div>
+                <h3>Historial</h3>
+                <p>Accede rápidamente a los manuales y árboles que has consultado recientemente.</p>
+                <button class="small-btn" data-nav="history">Ver historial</button>
+              </div>
+              <div class="welcome-card">
+                <div class="card-icon" style="background:linear-gradient(135deg, var(--cw-warning), #f59e0b)">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="1" fill="currentColor"></circle><circle cx="19" cy="12" r="1" fill="currentColor"></circle><circle cx="5" cy="12" r="1" fill="currentColor"></circle></svg>
+                </div>
+                <h3>FAQs</h3>
+                <p>Respuestas rápidas a preguntas frecuentes y tips de atención al cliente.</p>
+                <button class="small-btn" data-nav="faqs">Ver FAQs</button>
+              </div>
+              <div class="welcome-card">
+                <div class="card-icon" style="background:linear-gradient(135deg, #a78bfa, #8b5cf6)">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 5.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m-5.08-5.08l-4.24-4.24M19.78 19.78l-4.24-4.24m-5.08-5.08l-4.24-4.24" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                </div>
+                <h3>Buscar</h3>
+                <p>Herramientas avanzadas de búsqueda con filtros y sugerencias inteligentes.</p>
+                <button class="small-btn" id="goToSearchBtn">Buscar</button>
+              </div>
+              <div class="welcome-card">
+                <div class="card-icon" style="background:linear-gradient(135deg, #ec4899, #db2777)">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M10.5 1.5H3.75A2.25 2.25 0 0 0 1.5 3.75v16.5A2.25 2.25 0 0 0 3.75 22.5h16.5a2.25 2.25 0 0 0 2.25-2.25V13.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M19.5 1.5h3v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                </div>
+                <h3>Configuración</h3>
+                <p>Personaliza tu experiencia, gestiona permisos y exporta datos.</p>
+                <button class="small-btn" data-nav="settings">Ir a ajustes</button>
+              </div>
+            </div>
+            <div class="quick-tips">
+              <h4>🚀 Atajos útiles</h4>
+              <ul>
+                <li><kbd>/</kbd> para ir al buscador desde cualquier lugar</li>
+                <li><kbd>ESC</kbd> para cerrar sugerencias y modales</li>
+                <li><kbd>↑</kbd><kbd>↓</kbd> para navegar entre resultados</li>
+                <li><kbd>Enter</kbd> para abrir el resultado seleccionado</li>
+              </ul>
+            </div>
+          </article>
+
+          <article id="manualsListView" class="panel hidden">
+            <!-- Premium Header Banner -->
+            <div style="background:linear-gradient(135deg, #ff6b35 0%, #ff8a50 50%, #ffa366 100%);color:white;padding:40px;border-radius:16px;margin-bottom:40px;box-shadow:0 8px 24px rgba(255, 107, 53, 0.2)">
+              <h2 style="margin:0 0 12px 0;font-size:32px;font-weight:800;letter-spacing:-0.5px">📚 Manuales Técnicos</h2>
+              <p style="margin:0;font-size:15px;opacity:0.95;line-height:1.6">Tu biblioteca completa de soluciones paso a paso. Encuentra rápidamente cómo resolver cualquier problema técnico.</p>
+            </div>
+
+            <!-- Smart Filter Section -->
+            <div style="background:var(--cw-surface);padding:28px;border-radius:14px;margin-bottom:40px;box-shadow:0 2px 8px rgba(0,0,0,0.04);border:1px solid var(--cw-border)">
+              <div style="display:flex;gap:12px;align-items:center;margin-bottom:20px;flex-wrap:wrap">
+                <!-- Category Filter -->
+                <select id="manualsCategoryFilter" style="padding:12px 14px;font-size:14px;height:44px;border-radius:10px;border:2px solid var(--cw-border);background:var(--cw-surface);color:var(--cw-text);cursor:pointer;font-family:var(--font-stack);min-width:220px;flex:1;min-width:240px;transition:all 0.3s ease;box-shadow:0 2px 4px rgba(0,0,0,0.04)">
+                  <option value="">🏷️ Categoría</option>
+                </select>
+                
+                <!-- Create New Manual Button -->
+                <button id="createManualBtn" data-admin style="padding:12px 28px;font-size:14px;height:44px;border-radius:10px;border:none;background:linear-gradient(135deg, #ff6b35 0%, #ff8a50 100%);color:white;cursor:pointer;font-weight:600;font-family:var(--font-stack);display:flex;align-items:center;gap:8px;white-space:nowrap;transition:all 0.3s ease;box-shadow:0 4px 12px rgba(255, 107, 53, 0.2)">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <span>Nuevo</span>
+                </button>
+              </div>
+              
+              <!-- Quick Stats (Optional) -->
+              <div style="display:flex;gap:16px;padding-top:16px;border-top:1px solid var(--cw-border);font-size:12px;color:var(--cw-text-muted)">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span style="width:8px;height:8px;border-radius:50%;background:#ff6b35"></span>
+                  <span id="totalManualsCount">0 manuales</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Manuals Grid Container -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 12px; background: var(--cw-surface); border-radius: 8px; border: 1px solid var(--cw-border);">
+              <div style="font-size: 14px; font-weight: 500; color: var(--cw-text);">Manuales disponibles</div>
+              <button id="manageCategoriesBtn" class="small-btn" style="background: linear-gradient(135deg, #fcd34d, #f59e0b); color: white; border: none; cursor: pointer; padding: 8px 16px; border-radius: 6px; font-weight: 500;" data-admin>📁 Gestionar categorías</button>
+            </div>
+            <div id="manualsList" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(420px, 1fr));gap:28px;padding:0"></div>
+            
+            <!-- Empty State -->
+            <div id="noManualsMessage" style="display:none;text-align:center;padding:100px 40px;color:var(--cw-text-muted)">
+              <div style="font-size:80px;margin-bottom:24px;opacity:0.5">📭</div>
+              <h3 style="margin:0 0 12px 0;font-size:22px;font-weight:700">No hay manuales disponibles</h3>
+              <p style="margin:0;font-size:15px;opacity:0.8">Intenta ajustar los filtros de búsqueda o crea un nuevo manual</p>
+            </div>
+          </article>
+
+          <!-- Fibra Diagrams Panel -->
+          <article id="fibraView" class="panel hidden">
+            <!-- Premium Header Banner -->
+            <div style="background:linear-gradient(135deg, var(--cw-primary) 0%, var(--cw-secondary) 50%, var(--cw-primary-dark) 100%);color:white;padding:40px;border-radius:16px;margin-bottom:40px;box-shadow:0 8px 24px rgba(255, 128, 51, 0.2)">
+              <h2 style="margin:0 0 12px 0;font-size:32px;font-weight:800;letter-spacing:-0.5px">🌳 Árboles de Decisión</h2>
+              <p style="margin:0;font-size:15px;opacity:0.95;line-height:1.6">Diagramas interactivos para diagnóstico y troubleshooting. Crea árboles de decisión para guiar el proceso de resolución de problemas.</p>
+            </div>
+
+            <!-- Control Section -->
+            <div style="background:var(--cw-surface);padding:28px;border-radius:14px;margin-bottom:40px;box-shadow:0 2px 8px rgba(0,0,0,0.04);border:1px solid var(--cw-border)">
+              <div style="display:flex;gap:12px;align-items:center;margin-bottom:20px;flex-wrap:wrap">
+                <!-- Create Button -->
+                <button id="createDiagramBtn" data-admin style="padding:12px 28px;font-size:14px;height:44px;border-radius:10px;border:none;background:linear-gradient(135deg, var(--cw-primary), var(--cw-secondary));color:white;cursor:pointer;font-weight:600;font-family:var(--font-stack);display:flex;align-items:center;gap:8px;white-space:nowrap;transition:all 0.3s ease;box-shadow:0 4px 12px rgba(255, 128, 51, 0.2)">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <span>Nuevo árbol</span>
+                </button>
+              </div>
+
+              <!-- Stats -->
+              <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px">
+                <div style="background:linear-gradient(135deg, rgba(255, 128, 51, 0.1), rgba(255, 160, 80, 0.1));padding:16px;border-radius:10px;border:1px solid rgba(255, 128, 51, 0.2)">
+                  <div style="font-size:24px;font-weight:700;color:var(--cw-primary)" id="diagramsCount">0</div>
+                  <div style="font-size:12px;color:var(--cw-text-muted);margin-top:4px">Árboles creados</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Diagrams Grid -->
+            <div id="diagramsList" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:20px"></div>
+          </article>
+
+          <!-- Diagram Editor Modal -->
+          <div id="diagramModal" class="modal hidden">
+            <div class="modal-content" style="max-width:1000px;max-height:90vh;overflow-y:auto">
+              <button class="close" data-close aria-label="Cerrar">✕</button>
+              <h4 style="margin-bottom:24px;display:flex;align-items:center;gap:10px">
+                <span style="font-size:24px">🌳</span>
+                Diseñador de Árbol de Decisiones
+              </h4>
+              
+              <div style="display:flex;flex-direction:column;gap:20px">
+                <!-- Title & Stats -->
+                <div style="display:grid;grid-template-columns:1fr auto;gap:20px">
+                  <div>
+                    <label style="display:block;margin-bottom:8px;font-weight:600;font-size:14px">Nombre del diagrama</label>
+                    <input id="diagramTitle" type="text" class="input-field" placeholder="Ej: Fibra sin conexión" required style="font-size:16px;padding:12px">
+                  </div>
+                  <div id="treeStats" class="tree-stats" style="align-self:flex-end;grid-column:auto;display:grid;grid-template-columns:1fr 1fr;gap:12px;width:280px">
+                    <div class="stat-card">
+                      <div class="stat-card-value" id="nodeCount">0</div>
+                      <div class="stat-card-label">NODOS</div>
+                    </div>
+                    <div class="stat-card">
+                      <div class="stat-card-value" id="solutionCount">0</div>
+                      <div class="stat-card-label">SOLUCIONES</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Tree structure editor with depth visualization -->
+                <div style="display:flex;flex-direction:column;gap:12px">
+                  <div style="display:flex;justify-content:space-between;align-items:center">
+                    <h5 style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;color:var(--cw-text-muted);letter-spacing:1px">Estructura del árbol</h5>
+                    <span id="treeDepth" style="font-size:12px;color:var(--cw-text-muted)">Profundidad máx: 0</span>
+                  </div>
+                  <div id="diagramNodeEditor" style="border:2px solid var(--cw-border);border-radius:12px;padding:16px;background:var(--cw-surface);max-height:450px;overflow-y:auto;display:flex;flex-direction:column;gap:8px"></div>
+                </div>
+                
+                <!-- Node tools -->
+                <div style="display:flex;gap:12px;justify-content:space-between;align-items:center;padding-top:12px;border-top:1px solid var(--cw-border)">
+                  <button id="addNodeBtn" type="button" class="small-btn" style="background:linear-gradient(135deg, var(--cw-success, #10b981), #059669);color:white;border:none;cursor:pointer;border-radius:8px;padding:10px 16px;font-weight:600;gap:6px;display:flex;align-items:center">
+                    <span style="font-size:16px">+</span> Añadir nodo
+                  </button>
+                  <div style="display:flex;gap:12px;margin-left:auto">
+                    <button id="saveDiagramBtn" type="button" class="primary small-btn" style="background:linear-gradient(135deg, var(--cw-primary), var(--cw-secondary));border:none;color:white;font-weight:600;padding:10px 20px;border-radius:8px">
+                      💾 Guardar
+                    </button>
+                    <button id="deleteDiagramBtn" type="button" class="secondary small-btn" style="display:none;background:var(--cw-danger);color:white;border:none;padding:10px 16px;border-radius:8px;font-weight:600">
+                      🗑 Eliminar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Node Editor Modal - Professional Text Editor -->
+          <div id="nodeEditorModal" class="modal hidden">
+            <div class="modal-content" style="max-width:700px">
+              <button class="close" data-close aria-label="Cerrar">✕</button>
+              <h4 style="margin-bottom:20px">Editar Nodo</h4>
+              
+              <div style="display:flex;flex-direction:column;gap:16px">
+                <!-- Node Type Selection -->
+                <div style="display:flex;gap:12px">
+                  <label style="display:flex;align-items:center;gap:8px;flex:1;padding:12px;background:var(--cw-surface-alt);border:2px solid #e2e8f0;border-radius:8px;cursor:pointer" id="typeQuestionLabel">
+                    <input type="radio" name="nodeType" value="question" checked style="cursor:pointer">
+                    <span style="font-weight:600">❓ Pregunta</span>
+                  </label>
+                  <label style="display:flex;align-items:center;gap:8px;flex:1;padding:12px;background:var(--cw-surface-alt);border:2px solid #e2e8f0;border-radius:8px;cursor:pointer" id="typeSolutionLabel">
+                    <input type="radio" name="nodeType" value="solution" style="cursor:pointer">
+                    <span style="font-weight:600">✓ Solución</span>
+                  </label>
+                </div>
+                
+                <!-- Text Editor -->
+                <div>
+                  <label style="display:block;margin-bottom:8px;font-weight:600;font-size:14px">Contenido del nodo</label>
+                  <textarea id="nodeEditorText" class="input-field" placeholder="Escribe el contenido aquí..." style="min-height:150px;font-family:inherit;resize:vertical;padding:12px;font-size:14px"></textarea>
+                  <small style="display:block;margin-top:6px;color:var(--cw-text-muted)">💡 Tip: Para soluciones, usa saltos de línea para pasos. Ej: ✓ Paso 1\n✓ Paso 2</small>
+                </div>
+                
+                <!-- Image Editor -->
+                <div style="padding:12px;background:linear-gradient(135deg, #f0f9ff, #e0f2fe);border:2px dashed #0284c7;border-radius:8px">
+                  <label style="display:block;margin-bottom:8px;font-weight:600;font-size:14px">📸 Imagen (Opcional)</label>
+                  <div id="nodeImagePreview" style="display:none;margin-bottom:12px;border-radius:8px;overflow:hidden;background:white;padding:8px">
+                    <img id="nodeImagePreviewImg" style="max-width:100%;max-height:200px;display:block" alt="Preview">
+                    <button id="nodeImageRemoveBtn" type="button" style="margin-top:8px;padding:6px 12px;background:#ef4444;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;width:100%">🗑 Eliminar imagen</button>
+                  </div>
+                  <input id="nodeImageInput" type="file" accept="image/*" style="display:none">
+                  <button id="nodeImageUploadBtn" type="button" style="width:100%;padding:12px;background:white;border:2px solid #0284c7;border-radius:6px;cursor:pointer;font-weight:600;color:#0284c7;transition:all 0.2s">
+                    📁 Seleccionar imagen
+                  </button>
+                  <small style="display:block;margin-top:6px;color:var(--cw-text-muted);text-align:center">Formatos: JPG, PNG, GIF. Máx 5MB</small>
+                </div>
+                
+                <!-- Options for Questions -->
+                <div id="optionsSection" style="display:none;padding:12px;background:var(--cw-surface-alt);border-radius:8px">
+                  <label style="display:block;margin-bottom:12px;font-weight:600;font-size:13px;text-transform:uppercase;color:var(--cw-text-muted)">Opciones</label>
+                  <div id="optionsList" style="display:flex;flex-direction:column;gap:8px"></div>
+                  <button id="addOptionBtn" type="button" style="margin-top:12px;padding:8px 12px;background:var(--cw-primary);color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">+ Añadir opción</button>
+                </div>
+                
+                <!-- Actions -->
+                <div style="display:flex;gap:12px;justify-content:flex-end;padding-top:12px;border-top:1px solid var(--cw-border)">
+                  <button id="nodeEditorCancelBtn" class="secondary small-btn" data-close>Cancelar</button>
+                  <button id="nodeEditorSaveBtn" class="primary small-btn">💾 Guardar cambios</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Add Node Modal - Professional Type Selector -->
+          <div id="addNodeModal" class="modal hidden">
+            <div class="modal-content" style="max-width:500px">
+              <button class="close" data-close aria-label="Cerrar">✕</button>
+              <h4 style="margin-bottom:24px;text-align:center">Crear Nuevo Nodo</h4>
+              
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+                <!-- Pregunta Option -->
+                <div id="addNodeQuestionOption" style="padding:24px;background:linear-gradient(135deg, #fef3c7, #fef9e7);border:3px solid #f59e0b;border-radius:12px;cursor:pointer;text-align:center;transition:all 0.3s;user-select:none" data-type="question">
+                  <div style="font-size:48px;margin-bottom:12px">❓</div>
+                  <h5 style="margin:0 0 8px;color:#92400e;font-weight:700">Pregunta</h5>
+                  <p style="margin:0;font-size:13px;color:#b45309">Con múltiples opciones</p>
+                </div>
+                
+                <!-- Solución Option -->
+                <div id="addNodeSolutionOption" style="padding:24px;background:linear-gradient(135deg, #dcfce7, #f0fdf4);border:3px solid #10b981;border-radius:12px;cursor:pointer;text-align:center;transition:all 0.3s;user-select:none" data-type="solution">
+                  <div style="font-size:48px;margin-bottom:12px">✓</div>
+                  <h5 style="margin:0 0 8px;color:#15803d;font-weight:700">Solución</h5>
+                  <p style="margin:0;font-size:13px;color:#4d7c0f">Punto final del árbol</p>
+                </div>
+              </div>
+              
+              <p style="text-align:center;color:var(--cw-text-muted);font-size:13px;margin-bottom:0">Selecciona el tipo de nodo que deseas crear</p>
+            </div>
+          </div>
+
+          <!-- Interactive Diagram Viewer Modal -->
+          <div id="diagramViewerModal" class="modal hidden">
+            <div class="modal-content" style="max-width:800px;max-height:90vh;overflow-y:auto">
+              <button class="close" aria-label="Cerrar">✕</button>
+              
+              <div class="decision-tree-container">
+                <!-- Header -->
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:2px solid var(--cw-border);padding-bottom:16px">
+                  <div>
+                    <h4 id="viewerDiagramTitle" style="margin:0 0 8px 0;font-size:24px;font-weight:700">Troubleshooting</h4>
+                    <div class="tree-breadcrumb" id="diagramViewerPath" style="margin:0;background:transparent;padding:0"></div>
+                  </div>
+                  <div class="tree-progress">
+                    <span id="currentDepthDisplay" style="font-size:14px;color:var(--cw-text-muted)">Nivel 1</span>
+                  </div>
+                </div>
+                
+                <!-- Content -->
+                <div style="display:flex;flex-direction:column;gap:20px">
+                  <!-- Question -->
+                  <div id="diagramViewerQuestion" class="tree-question-box" style="display:none">
+                    <h3 id="questionText">¿Pregunta?</h3>
+                    <div class="tree-depth-indicator" id="depthIndicator"></div>
+                  </div>
+                  
+                  <!-- Options -->
+                  <div id="diagramViewerOptions" class="tree-options" style="min-height:80px"></div>
+                  
+                  <!-- Solution -->
+                  <div id="diagramViewerSolution" class="tree-solution-box" style="display:none">
+                    <h3 id="solutionTitle">Solución encontrada</h3>
+                    <p id="solutionText"></p>
+                  </div>
+                </div>
+                
+                <!-- Navigation -->
+                <div class="tree-navigation">
+                  <button id="diagramViewerRestartBtn" class="tree-nav-btn" style="display:none;background:var(--cw-primary);color:white;border:none;font-weight:600">
+                    ↻ Volver al inicio
+                  </button>
+                  <button id="diagramViewerBackBtn" class="tree-nav-btn" style="display:none;margin-left:auto">
+                    ← Retroceder
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <article id="manualView" class="panel hidden" aria-live="assertive">
+            <header class="manual-header">
+              <div class="header-top">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <button id="backToManualsBtn" class="icon-btn" title="Volver a manuales">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                  </button>
+                  <h3 id="manualTitle">Título del manual</h3>
+                </div>
+                <div class="manual-actions">
+                      <button id="qrBtn" class="icon-btn" title="Abrir en móvil">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="8" height="8" stroke="currentColor" stroke-width="1.2"></rect><rect x="13" y="13" width="8" height="8" stroke="currentColor" stroke-width="1.2"></rect><rect x="13" y="3" width="4" height="4" stroke="currentColor" stroke-width="1.2"></rect></svg>
+                  </button>
+                      <button id="editManualBtn" class="icon-btn" data-admin title="Editar manual">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 21v-3.75L14.06 6.19a2.12 2.12 0 0 1 3 0l0 0a2.12 2.12 0 0 1 0 3L6 20.25H3z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                      </button>
+                </div>
+              </div>
+              <div class="manual-meta">
+                <span class="meta-tag"><span class="meta-label">Categoría:</span> <span id="manualCategory"></span></span>
+                <span class="meta-tag"><span class="meta-label">Versión:</span> <span id="manualVersion"></span></span>
+              </div>
+            </header>
+
+
+
+            <section id="manualSteps" class="steps">
+              <!-- Steps populated by JS -->
+            </section>
+
+            <section id="manualComments" class="comments hidden" aria-label="Comentarios internos">
+              <h4>Comentarios internos</h4>
+              <div id="commentsList" class="comments-list"></div>
+              <div class="comment-input-group">
+                <textarea id="commentInput" placeholder="Añadir comentario..." maxlength="500"></textarea>
+                <button id="addComment" class="primary">Enviar</button>
+              </div>
+            </section>
+
+            <section id="versionsSection" class="versions hidden" aria-label="Historial de versiones">
+              <h4>Historial de versiones</h4>
+              <div id="versionsList" class="versions-list"></div>
+            </section>
+
+          </article>
+
+          <article id="historyView" class="panel hidden">
+            <div class="panel-header">
+              <h3>Historial</h3>
+              <p class="subtitle">Manuales que has consultado recientemente.</p>
+            </div>
+            <div id="historyList" class="history-list">
+              <p class="empty-state">No hay historial aún. Los manuales que consultes aparecerán aquí.</p>
+            </div>
+          </article>
+
+          <article id="faqsView" class="panel hidden">
+            <div class="panel-header">
+              <h3>FAQs y Tips</h3>
+              <p class="subtitle">Respuestas rápidas a preguntas frecuentes de clientes y agentes.</p>
+            </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px">
+                <div style="color:var(--cw-text-muted);">Consejos rápidos y preguntas frecuentes para agentes.</div>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <button id="createFaqBtn" class="primary small-btn" data-admin title="Crear nueva FAQ">+ Crear FAQ</button>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+                <input id="faqSearch" class="input-field" placeholder="Buscar FAQ por pregunta o respuesta..." style="flex:1">
+                <button id="clearFaqSearch" class="secondary" title="Limpiar búsqueda">Limpiar</button>
+              </div>
+              <div id="faqsList" class="faqs-list"></div>
+          </article>
+
+          <article id="settingsView" class="panel hidden">
+            <div class="panel-header">
+              <h3>⚙️ Ajustes y Configuración</h3>
+              <p class="subtitle">Personaliza tu experiencia en el dashboard de Cableworld.</p>
+            </div>
+            
+            <div class="settings-grid">
+              <!-- TEMA Y APARIENCIA -->
+              <section class="settings-section">
+                <h4>🎨 Tema y Apariencia</h4>
+                <div class="setting-item">
+                  <div class="setting-label">
+                    <label for="themeDark">Modo oscuro</label>
+                    <small>Usa colores oscuros para reducir fatiga visual</small>
+                  </div>
+                  <input type="checkbox" id="themeDark" class="toggle-switch" title="Activar tema oscuro">
+                </div>
+              </section>
+
+              <!-- NOTIFICACIONES -->
+              <section class="settings-section">
+                <h4>🔔 Notificaciones</h4>
+                <div class="setting-item">
+                  <div class="setting-label">
+                    <label for="notifEnabled">Habilitar notificaciones</label>
+                    <small>Recibe alertas de actualizaciones y cambios importantes</small>
+                  </div>
+                  <input type="checkbox" id="notifEnabled" class="toggle-switch" checked title="Notificaciones habilitadas">
+                </div>
+              </section>
+
+              <!-- PERFIL Y USUARIO -->
+              <section class="settings-section">
+                <h4>👤 Perfil de Usuario</h4>
+                <div class="setting-item">
+                  <div class="setting-label">
+                    <label>Nombre de usuario</label>
+                    <small>Tu nombre tal como lo definió el administrador</small>
+                  </div>
+                  <span id="profileNameDisplay" style="color:var(--cw-text);font-size:14px;font-weight:600">—</span>
+                </div>
+                <div class="setting-item">
+                  <div class="setting-label">
+                    <label>Rol actual</label>
+                    <small>Tu nivel de acceso en el sistema</small>
+                  </div>
+                  <span id="profileRoleDisplay" style="color:var(--cw-text);font-size:14px;font-weight:600">Usuario</span>
+                </div>
+                <div class="setting-item">
+                  <div class="setting-label">
+                    <label>Miembro desde</label>
+                    <small>Fecha en que empezaste a usar el dashboard</small>
+                  </div>
+                  <span id="memberSinceDate" style="color:var(--cw-text);font-size:14px;font-weight:600">—</span>
+                </div>
+              </section>
+
+              <!-- CAMBIAR CONTRASEÑA -->
+              <section class="settings-section">
+                <h4>🔑 Cambiar Contraseña</h4>
+                <div class="setting-item" style="flex-direction:column;align-items:flex-start;gap:12px">
+                  <div style="width:100%;display:flex;flex-direction:column;gap:8px">
+                    <label style="font-size:12px;font-weight:600;color:var(--cw-text-muted)">Contraseña Actual</label>
+                    <input id="currentPasswordInput" type="password" class="input-field" placeholder="Tu contraseña actual" style="padding:8px">
+                  </div>
+                  <div style="width:100%;display:flex;flex-direction:column;gap:8px">
+                    <label style="font-size:12px;font-weight:600;color:var(--cw-text-muted)">Nueva Contraseña</label>
+                    <input id="newPasswordInput" type="password" class="input-field" placeholder="Nueva contraseña" style="padding:8px">
+                  </div>
+                  <div style="width:100%;display:flex;flex-direction:column;gap:8px">
+                    <label style="font-size:12px;font-weight:600;color:var(--cw-text-muted)">Confirmar Nueva Contraseña</label>
+                    <input id="confirmPasswordInput" type="password" class="input-field" placeholder="Confirma la nueva contraseña" style="padding:8px">
+                  </div>
+                  <button id="changePasswordBtn" class="primary" style="padding:10px 16px;align-self:flex-end">Cambiar Contraseña</button>
+                </div>
+              </section>
+
+              <!-- DATOS Y SEGURIDAD -->
+              <section class="settings-section">
+                <h4>🔐 Datos y Seguridad</h4>
+                <div class="setting-item">
+                  <div class="setting-label">
+                    <label>Almacenamiento local</label>
+                    <small>Progreso, comentarios e historial se almacenan en tu navegador</small>
+                  </div>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <button id="exportAllDataBtn" class="secondary" title="Exportar todos los datos locales en JSON">📥 Exportar</button>
+                    <button id="backupDataBtn" class="secondary" title="Crear respaldo de datos">💾 Respaldar</button>
+                    <button id="restoreDataBtn" class="secondary" title="Restaurar desde respal anterior">↩️ Restaurar</button>
+                    <button id="clearDataBtn" class="secondary" title="Borrar todos los datos locales" style="background:var(--cw-danger);color:white;border-color:var(--cw-danger)">🗑️ Borrar todo</button>
+                  </div>
+                </div>
+              </section>
+
+              <!-- BÚSQUEDA Y HISTORIAL -->
+              <section class="settings-section">
+                <h4>🔍 Búsqueda e Historial</h4>
+                <div class="setting-item">
+                  <div class="setting-label">
+                    <label for="searchHistoryEnabled">Guardar historial de búsqueda</label>
+                    <small>Almacena tus búsquedas recientes para acceso rápido</small>
+                  </div>
+                  <input type="checkbox" id="searchHistoryEnabled" class="toggle-switch" checked title="Historial de búsqueda">
+                </div>
+                <div class="setting-item">
+                  <div class="setting-label">
+                    <label for="autoSuggest">Sugerencias automáticas</label>
+                    <small>Mostrar sugerencias mientras escribes</small>
+                  </div>
+                  <input type="checkbox" id="autoSuggest" class="toggle-switch" checked title="Sugerencias automáticas">
+                </div>
+                <div class="setting-item">
+                  <div class="setting-label">
+                    <label>Limpiar historial</label>
+                    <small>Borrar tu historial de búsquedas y vistas</small>
+                  </div>
+                  <button id="clearHistoryBtn" class="secondary" title="Limpiar historial">Limpiar historial</button>
+                </div>
+              </section>
+
+              <!-- AYUDA Y SOPORTE -->
+              <section class="settings-section">
+                <h4>❓ Ayuda y Soporte</h4>
+                <ul class="help-links">
+                  <li><a href="#" onclick="showHelp(); return false;">📖 Ver atajos de teclado</a></li>
+                  <li><a href="#" onclick="showAlert('Acerca de Cableworld', 'Cableworld Knowledge Dashboard v2.0'); return false;">ℹ️ Acerca de Cableworld</a></li>
+                  <li><a href="#" onclick="showAlert('Enviar comentario', 'Envía tus comentarios a: soporte@cableworld.com'); return false;">💬 Enviar comentario</a></li>
+                  <li><a href="#" onclick="showAlert('Reportar problema', 'Contacta a: soporte@cableworld.com'); return false;">📧 Reportar problema</a></li>
+                </ul>
+              </section>
+
+              <!-- GESTIÓN DE USUARIOS (ADMIN ONLY) -->
+              <section class="settings-section hidden" data-admin>
+                <h4>👥 Gestión de Usuarios (Administrador)</h4>
+                <div class="setting-item" style="flex-direction:column;align-items:flex-start;gap:12px">
+                  <div id="usersList" style="width:100%">
+                    <!-- User rows injected here -->
+                  </div>
+                  <fieldset style="width:100%;border:1px solid var(--cw-border-light);border-radius:8px;padding:12px;margin-top:8px">
+                    <legend style="font-weight:600;font-size:13px;padding:0 6px">Crear nuevo usuario</legend>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+                      <input id="newUserName" class="input-field" placeholder="Nombre de usuario" style="padding:8px">
+                      <input id="newUserFullName" class="input-field" placeholder="Nombre completo" style="padding:8px">
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 110px;gap:8px;margin-bottom:8px">
+                      <input id="newUserEmail" class="input-field" placeholder="Correo electrónico" type="email" style="padding:8px">
+                      <select id="newUserRole" class="input-field" style="padding:8px">
+                        <option value="admin">Administrador</option>
+                        <option value="agent">Usuario</option>
+                      </select>
+                    </div>
+                    <div style="display:flex;gap:8px">
+                      <button id="addUserBtn" class="primary" style="padding:8px 16px;flex:1">Crear Usuario</button>
+                    </div>
+                    <small style="color:var(--cw-text-muted);margin-top:8px;display:block">El usuario recibirá un email para configurar su contraseña en el primer acceso.</small>
+                  </fieldset>
+                  <small style="color:var(--cw-text-muted);margin-top:6px">Nota: La gestión de usuarios aquí es local (prototype). Para producción, usa un backend seguro.</small>
+                </div>
+              </section>
+            </div>
+          </article>
+
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- QR Modal -->
+  <div id="qrModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="qrTitle">
+    <div class="modal-content">
+      <h4 id="qrTitle">Abrir en móvil</h4>
+      <img id="qrImage" alt="Código QR para abrir manual" style="max-width:280px">
+      <p>Escanea con la cámara de tu móvil para abrir este manual.</p>
+    </div>
+  </div>
+
+  <!-- Login Modal -->
+  <div id="loginModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+    <div class="modal-content">
+      <h4 id="loginTitle">Iniciar sesión</h4>
+      
+      <!-- Step 1: Username/Email -->
+      <div id="loginStep1" style="display:flex;flex-direction:column;gap:8px">
+        <input id="loginUser" placeholder="Usuario o Correo" class="input-field" autocomplete="username">
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button id="loginNextBtn" class="primary">Siguiente</button>
+        </div>
+      </div>
+      
+      <!-- Step 2: Password or Setup -->
+      <div id="loginStep2" class="hidden" style="display:flex;flex-direction:column;gap:8px">
+        <div style="color:var(--cw-text-muted);font-size:13px;margin-bottom:8px">
+          <span id="loginUserDisplay"></span>
+        </div>
+        
+        <!-- Show password field if passwordSet=true -->
+        <div id="passwordFieldWrapper" style="display:flex;flex-direction:column;gap:8px">
+          <input id="loginPass" placeholder="Contraseña" type="password" class="input-field" autocomplete="current-password">
+        </div>
+        
+        <!-- Show setup button if passwordSet=false -->
+        <div id="setupButtonWrapper" class="hidden" style="text-align:center;padding:16px;background:var(--cw-surface-dark);border-radius:8px">
+          <p style="color:var(--cw-text-muted);font-size:13px;margin:0 0 12px 0">Este es tu primer acceso.</p>
+          <button id="goToSetupBtn" class="primary" style="width:100%">Configurar Contraseña</button>
+        </div>
+        
+        <div style="display:flex;gap:8px;justify-content:space-between">
+          <button id="loginBackBtn" class="secondary">Atrás</button>
+          <button id="loginSubmit" class="primary">Iniciar Sesión</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Setup Password Modal (First Login) -->
+  <div id="setupPasswordModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="setupPasswordTitle">
+    <div class="modal-content" style="max-width:400px">
+      <h4 id="setupPasswordTitle">Configurar Contraseña</h4>
+      <p style="color:var(--cw-text-muted);font-size:13px;margin-bottom:16px">Este es tu primer acceso. Por favor, establece una contraseña segura.</p>
+      
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div>
+          <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:var(--cw-text-muted)">Correo electrónico</label>
+          <input id="setupEmail" class="input-field" readonly style="background:var(--cw-surface-dark);cursor:not-allowed">
+        </div>
+
+        <div>
+          <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:var(--cw-text-muted)">Nueva Contraseña</label>
+          <input id="setupPassword" type="password" class="input-field" placeholder="Mínimo 8 caracteres">
+          
+          <!-- Password Strength Indicator -->
+          <div id="passwordStrengthBar" style="height:4px;background:var(--cw-border-light);border-radius:2px;margin-top:6px;overflow:hidden">
+            <div id="passwordStrengthFill" style="height:100%;width:0%;background:#ff6b35;transition:width 0.2s ease"></div>
+          </div>
+          
+          <!-- Password Requirements -->
+          <div id="passwordRequirements" style="font-size:11px;color:var(--cw-text-muted);margin-top:8px;display:grid;gap:4px">
+            <div><span id="req1">○</span> 8 caracteres mínimo</div>
+            <div><span id="req2">○</span> Una mayúscula (A-Z)</div>
+            <div><span id="req3">○</span> Una minúscula (a-z)</div>
+            <div><span id="req4">○</span> Un número (0-9)</div>
+            <div><span id="req5">○</span> Un carácter especial (!@#$%^&*)</div>
+          </div>
+        </div>
+
+        <div>
+          <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:var(--cw-text-muted)">Confirmar Contraseña</label>
+          <input id="setupPasswordConfirm" type="password" class="input-field" placeholder="Repite la contraseña">
+          <div id="passwordMatchIndicator" style="font-size:11px;color:var(--cw-text-muted);margin-top:4px">
+            <span id="matchStatus">○ Las contraseñas deben coincidir</span>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+          <button id="cancelSetupBtn" class="secondary" style="padding:8px 16px">Cancelar</button>
+          <button id="submitSetupBtn" class="primary" style="padding:8px 16px" disabled>Establecer Contraseña</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Floating Toolbar removed: toolbar was removed per user request -->
+
+  <!-- New Manual Modal (Admin) -->
+  <div id="newManualModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="newManualTitle">
+    <div class="modal-content">
+      <button class="close" data-close aria-label="Cerrar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M18 6L6 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <h4 id="newManualTitle">Crear manual</h4>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <input id="newTitle" class="input-field" placeholder="Título">
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="newCategorySelect" class="input-field" style="flex:1">
+            <option value="">Selecciona una categoría</option>
+          </select>
+          <input id="newCategoryName" class="input-field" placeholder="Crear nueva categoría" style="flex:0 0 220px">
+        </div>
+        <script>
+          (function() {
+            const catName = document.getElementById('newCategoryName');
+            const catSelect = document.getElementById('newCategorySelect');
+            if(catName && catSelect) {
+              catName.addEventListener('input', ()=>{ catSelect.disabled = catName.value.trim() !== ''; catSelect.style.opacity = catSelect.disabled ? '0.5' : '1'; });
+            }
+          })();
+        </script>
+        <div style="display:flex;gap:8px">
+          <input id="newVersion" class="input-field" placeholder="Versión (ej. 1.0.0)">
+          <input id="newSummary" class="input-field" placeholder="Resumen breve">
+        </div>
+        <label style="font-size:13px;color:var(--cw-text-muted)">Pasos (añade tantos como necesites)</label>
+        <div id="newStepsEditor" style="display:flex;flex-direction:column;gap:8px;max-height:320px;overflow:auto;padding:6px;border:1px solid var(--cw-border);border-radius:8px;background:var(--cw-surface);"></div>
+        <div style="display:flex;gap:8px;justify-content:flex-start">
+          <button id="addNewStepBtn" class="small-btn">Añadir paso</button>
+          <span style="color:var(--cw-text-muted);font-size:13px;margin-left:6px">Cada paso puede incluir título, contenido y una imagen.</span>
+        </div>
+        <div style="border-top:1px solid var(--cw-border);padding-top:12px;margin-top:8px">
+          <label style="font-size:13px;color:var(--cw-text-muted);display:block;margin-bottom:8px">O importar desde archivo</label>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <input id="pdfFileInput" type="file" accept=".pdf" style="display:none">
+            <button id="processPdfBtn" class="small-btn" style="background:linear-gradient(135deg, #ec4899, #db2777);color:white;border:none;cursor:pointer;flex:1;min-width:150px">📄 Importar PDF</button>
+            <input id="jsonFileInput" type="file" accept=".json" style="display:none">
+            <button id="importJsonBtn" class="small-btn" style="background:linear-gradient(135deg, #6366f1, #4f46e5);color:white;border:none;cursor:pointer;flex:1;min-width:150px">📋 Importar JSON</button>
+          </div>
+          <div id="pdfStatus" style="font-size:12px;color:var(--cw-text-muted);margin-top:6px;display:none"></div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button id="saveNewManualBtn" class="primary">Guardar</button>
+          <button class="secondary" data-close>Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import Manuals Modal -->
+  <div id="importModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="importTitle">
+    <div class="modal-content">
+      <button class="close" data-close aria-label="Cerrar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M18 6L6 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <h4 id="importTitle">Importar manuales</h4>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <label>Pega aquí JSON con un array de manuales</label>
+        <textarea id="importBody" class="input-field" style="min-height:200px;font-family:monospace"></textarea>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button id="importConfirmBtn" class="primary">Importar</button>
+          <button class="secondary" data-close>Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manual Editor Modal (Admin) -->
+  <div id="manualEditorModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="editManualTitle">
+    <div class="modal-content" style="max-width: 900px; max-height: 90vh; display: flex; flex-direction: column;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--cw-border); padding-bottom: 12px; margin-bottom: 16px;">
+        <h4 id="editManualTitle" style="margin: 0; color: var(--cw-text);">Editar manual</h4>
+        <button class="close" data-close aria-label="Cerrar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M18 6L6 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+
+      <div style="flex: 1; overflow-y: auto; padding-right: 8px;">
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <!-- Título -->
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--cw-text-muted); margin-bottom: 4px;">Título</label>
+            <input id="editTitle" class="input-field" placeholder="Título del manual" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--cw-border);">
+          </div>
+
+          <!-- Resumen -->
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--cw-text-muted); margin-bottom: 4px;">Resumen</label>
+            <input id="editSummary" class="input-field" placeholder="Breve descripción del manual" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--cw-border);">
+          </div>
+
+          <!-- Pasos -->
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <label style="font-size: 12px; font-weight: 600; color: var(--cw-text-muted); margin: 0;">Pasos del manual</label>
+              <button id="addStepBtn" class="small-btn" style="font-size: 12px; padding: 6px 12px;">+ Añadir paso</button>
+            </div>
+            <div id="editStepsList" style="display: flex; flex-direction: column; gap: 12px; background: var(--cw-surface-dark, rgba(0,0,0,0.05)); padding: 12px; border-radius: 8px; min-height: 100px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Acciones -->
+      <div style="border-top: 1px solid var(--cw-border); padding-top: 16px; margin-top: 16px; display: flex; gap: 8px; justify-content: flex-end;">
+        <button id="exportCurrentBtn" class="secondary" style="padding: 10px 16px;">📥 Exportar</button>
+        <button id="deleteManualBtn" class="secondary" style="padding: 10px 16px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">🗑️ Eliminar</button>
+        <button class="secondary" data-close style="padding: 10px 16px;">Cancelar</button>
+        <button id="saveManualBtn" class="primary" style="padding: 10px 16px;">💾 Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notifications Modal -->
+  <div id="notificationsPanel" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="notifTitle">
+    <div class="modal-content">
+      <button class="close" data-close aria-label="Cerrar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M18 6L6 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <h4 id="notifTitle">Notificaciones</h4>
+      <div id="notificationsList" class="notifications-list">No hay notificaciones.</div>
+    </div>
+  </div>
+
+  <!-- Help Modal -->
+  <div id="helpModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <div class="modal-content">
+      <button class="close" data-close aria-label="Cerrar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M18 6L6 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <h4 id="helpTitle">Ayuda y atajos</h4>
+      <div class="help-content">
+        <h5>Atajos de teclado</h5>
+        <table class="keyboard-table">
+          <tr>
+            <td><kbd>/</kbd></td>
+            <td>Ir al buscador</td>
+          </tr>
+          <tr>
+            <td><kbd>↓</kbd><kbd>↑</kbd></td>
+            <td>Navegar sugerencias</td>
+          </tr>
+          <tr>
+            <td><kbd>Enter</kbd></td>
+            <td>Seleccionar sugerencia</td>
+          </tr>
+          <tr>
+            <td><kbd>Esc</kbd></td>
+            <td>Cerrar sugerencias</td>
+          </tr>
+        </table>
+        <h5>Datos mínimos por cliente</h5>
+        <ul>
+          <li>Nombre completo</li>
+          <li>Dirección de instalación</li>
+          <li>Modelo de router/decodificador</li>
+          <li>Código de cliente</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Category Modal -->
+  <div id="editCategoryModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="editCategoryTitle">
+    <div class="modal-content" style="max-width:500px">
+      <button class="close" data-close aria-label="Cerrar">✕</button>
+      <h4 id="editCategoryTitle" style="margin-bottom:20px">Gestionar Categorías</h4>
+      
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <!-- Add New Category -->
+        <div style="padding:12px;background:var(--cw-surface-alt);border-radius:8px">
+          <label style="display:block;margin-bottom:8px;font-weight:600;font-size:13px">Nueva categoría</label>
+          <div style="display:flex;gap:8px">
+            <input id="newCategoryInput" type="text" class="input-field" placeholder="Nombre de la categoría" style="flex:1">
+            <button id="addCategoryBtn" type="button" class="primary small-btn">+ Agregar</button>
+          </div>
+        </div>
+        
+        <!-- Categories List -->
+        <div>
+          <label style="display:block;margin-bottom:8px;font-weight:600;font-size:13px">Categorías existentes</label>
+          <div id="categoriesList" style="display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto"></div>
+        </div>
+        
+        <!-- Change Manual Category -->
+        <div style="padding:12px;background:linear-gradient(135deg, #fef3c7, #fef9e7);border:2px solid #f59e0b;border-radius:8px">
+          <label style="display:block;margin-bottom:8px;font-weight:600;font-size:13px">Cambiar categoría del manual actual</label>
+          <div style="display:flex;gap:8px">
+            <select id="changeManualCategorySelect" class="input-field" style="flex:1">
+              <option value="">-- Seleccionar categoría --</option>
+            </select>
+            <button id="changeManualCategoryBtn" type="button" class="primary small-btn">Cambiar</button>
+          </div>
+        </div>
+        
+        <!-- Close -->
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;border-top:1px solid var(--cw-border);padding-top:12px">
+          <button id="closeCategoryModalBtn" class="secondary small-btn" data-close>Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ Modal -->
+  <div id="faqModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="faqTitle">
+    <div class="modal-content">
+      <button class="close" data-close aria-label="Cerrar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M18 6L6 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <h4 id="faqTitle">Crear / Editar FAQ</h4>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <input id="faqQuestion" class="input-field" placeholder="Pregunta (ej. ¿Cómo restablecer router?)">
+        <textarea id="faqAnswer" class="input-field" placeholder="Respuesta detallada (puedes usar HTML básico)" style="min-height:160px;font-family:inherit"></textarea>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button id="deleteFaqBtn" class="secondary" data-admin style="display:none">Eliminar</button>
+          <button id="saveFaqBtn" class="primary">Guardar</button>
+          <button class="secondary" data-close>Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="../js/app.js"></script>
+</body>
+</html>
