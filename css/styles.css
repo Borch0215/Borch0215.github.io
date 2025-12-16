@@ -78,6 +78,242 @@ body {
   white-space: nowrap;
 }
 
+/* ============================================================================
+   Breadcrumb Navigation
+   ============================================================================ */
+
+.breadcrumb {
+  padding: 12px 24px;
+  background: var(--cw-surface);
+  border-bottom: 1px solid var(--cw-border-light);
+  margin-bottom: 0;
+}
+
+.breadcrumb-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.breadcrumb-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--cw-text-muted);
+}
+
+.breadcrumb-item:not(:last-child)::after {
+  content: '›';
+  color: var(--cw-border);
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.breadcrumb-item:last-child {
+  color: var(--cw-primary);
+  font-weight: 600;
+}
+
+.breadcrumb-item a {
+  color: var(--cw-text-muted);
+  text-decoration: none;
+  transition: var(--transition);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.breadcrumb-item a:hover {
+  color: var(--cw-primary);
+  background: rgba(255, 128, 51, 0.08);
+}
+
+.breadcrumb-item:last-child a {
+  color: var(--cw-primary);
+  cursor: default;
+  pointer-events: none;
+}
+
+/* ============================================================================
+   Loading Spinners and Skeleton Loaders
+   ============================================================================ */
+
+.loading-spinner {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 128, 51, 0.1);
+  border-top-color: var(--cw-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(2px);
+}
+
+.loading-content {
+  background: var(--cw-surface);
+  padding: 32px;
+  border-radius: 16px;
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.loading-text {
+  font-size: 14px;
+  color: var(--cw-text-muted);
+  font-weight: 500;
+}
+
+/* Skeleton Loader */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--cw-surface-alt) 25%,
+    var(--cw-border-light) 50%,
+    var(--cw-surface-alt) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-text {
+  height: 16px;
+  margin-bottom: 8px;
+}
+
+.skeleton-title {
+  height: 24px;
+  width: 60%;
+  margin-bottom: 12px;
+}
+
+.skeleton-card {
+  padding: 20px;
+  background: var(--cw-surface);
+  border: 1px solid var(--cw-border);
+  border-radius: 12px;
+}
+
+/* ============================================================================
+   Enhanced Card Effects (Hover, Badges)
+   ============================================================================ */
+
+.badge-new {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  animation: badge-pulse 2s ease-in-out infinite;
+}
+
+.badge-updated {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+@keyframes badge-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.95; }
+}
+
+/* ============================================================================
+   Sidebar Collapsible
+   ============================================================================ */
+
+.sidebar.collapsed {
+  width: 72px;
+}
+
+.sidebar.collapsed .brand-name {
+  display: none;
+}
+
+.sidebar.collapsed .nav button {
+  padding: 12px;
+  justify-content: center;
+}
+
+.sidebar.collapsed .nav button span:not(.nav-icon) {
+  display: none;
+}
+
+.sidebar-toggle {
+  position: absolute;
+  top: 16px;
+  right: -12px;
+  width: 24px;
+  height: 24px;
+  background: var(--cw-primary);
+  border: 2px solid var(--cw-surface);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  color: white;
+  font-size: 12px;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.sidebar-toggle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(255, 128, 51, 0.3);
+}
+
+.sidebar.collapsed .sidebar-toggle {
+  transform: rotate(180deg);
+}
+
+.sidebar.collapsed .sidebar-toggle:hover {
+  transform: rotate(180deg) scale(1.1);
+}
+
 /* alias for screen-reader-only used in JS templates */
 .sr-only {
   position: absolute !important;
@@ -1277,6 +1513,54 @@ kbd {
   border-bottom: 2px solid var(--cw-border);
   padding-bottom: 20px;
   margin-bottom: 24px;
+}
+
+/* ============================================================================
+   Manual View Tabs
+   ============================================================================ */
+
+.manual-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid var(--cw-border-light);
+  margin-bottom: 24px;
+  padding: 0;
+  list-style: none;
+}
+
+.manual-tab {
+  padding: 12px 20px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--cw-text-muted);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: var(--font-stack);
+  position: relative;
+  margin-bottom: -2px;
+}
+
+.manual-tab:hover {
+  color: var(--cw-text);
+  background: rgba(255, 128, 51, 0.05);
+}
+
+.manual-tab.active {
+  color: var(--cw-primary);
+  border-bottom-color: var(--cw-primary);
+  background: rgba(255, 128, 51, 0.08);
+}
+
+.manual-tab-content {
+  display: none;
+}
+
+.manual-tab-content.active {
+  display: block;
+  animation: fadeIn 0.3s ease;
 }
 
 /* Manual view: two-column layout on wide screens */

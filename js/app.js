@@ -20,7 +20,10 @@ const STATE = {
   manualOverrides: JSON.parse(localStorage.getItem('cw:manualOverrides')||'{}'),
   authUser: JSON.parse(localStorage.getItem('cw:authUser')||'null'),
   fibraDiagrams: JSON.parse(localStorage.getItem('cw:fibraDiagrams')||'[]'),
-  api: api
+  api: api,
+  breadcrumb: ['dashboard'],
+  activeTab: localStorage.getItem('cw:activeTab') || 'steps',
+  sidebarCollapsed: JSON.parse(localStorage.getItem('cw:sidebarCollapsed') || 'false')
 };
 
 const els = {
@@ -114,6 +117,12 @@ async function init(){
   applyTheme();
   applyFontSize();
   
+  // PHASE 1: Restore sidebar state
+  restoreSidebarState();
+  
+  // PHASE 1: Initialize breadcrumb
+  updateBreadcrumb(['dashboard']);
+  
   // update UI with persisted values
   if(els.themeDark) els.themeDark.checked = STATE.darkMode;
   if(els.notifEnabled) els.notifEnabled.checked = STATE.notifEnabled;
@@ -181,6 +190,9 @@ async function init(){
 
   // load data
   try{
+    // PHASE 1: Show loading spinner for initial data load
+    showLoadingSpinner('Cargando manuales...');
+    
     const response = await api.getManuals();
     // load base manuals from data
     let baseManuals = response.data || response.manuals || [];
@@ -268,6 +280,9 @@ async function init(){
     if (els.categoryFilter) {
       els.categoryFilter.addEventListener('change', () => applyManualFilters());
     }
+    
+    // PHASE 1: Hide loading spinner after initial setup
+    hideLoadingSpinner();
 
     // autocomplete selection
     els.autocomplete.addEventListener('select-suggestion', (ev)=>{
@@ -292,6 +307,20 @@ async function init(){
     // global UI actions
     document.querySelectorAll('[data-nav]').forEach(btn=>btn.addEventListener('click', navClick));
     document.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click', ()=>openPanel(b.dataset.open)));
+
+    // PHASE 1: Manual tabs
+    document.querySelectorAll('.manual-tab').forEach(tab => {
+      tab.addEventListener('click', (e) => {
+        const tabId = e.target.id.replace('tab-', '');
+        switchManualTab(tabId);
+      });
+    });
+
+    // PHASE 1: Sidebar toggle
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    if (sidebarToggle) {
+      sidebarToggle.addEventListener('click', toggleSidebar);
+    }
 
     // Agent mode toggle
     if(els.toggleAgentMode) {
@@ -734,23 +763,28 @@ function openPanel(name){
   if(name === 'dashboard') {
     document.getElementById('welcome').classList.remove('hidden');
     document.getElementById('adminToolbar')?.classList.add('hidden');
+    updateBreadcrumb(['dashboard']);
   }
   else if(name === 'manuals') {
     document.getElementById('manualsListView').classList.remove('hidden');
     document.getElementById('adminToolbar')?.classList.add('hidden');
+    updateBreadcrumb(['dashboard', 'manuals']);
   }
   else if(name === 'faqs') {
     document.getElementById('faqsView').classList.remove('hidden');
     document.getElementById('adminToolbar')?.classList.add('hidden');
+    updateBreadcrumb(['dashboard', 'faqs']);
   }
   else if(name === 'fibra') {
     document.getElementById('fibraView').classList.remove('hidden');
     document.getElementById('adminToolbar')?.classList.add('hidden');
+    updateBreadcrumb(['dashboard', 'fibra']);
     loadDiagrams();
   }
   else if(name === 'settings') {
     document.getElementById('settingsView').classList.remove('hidden');
     document.getElementById('adminToolbar')?.classList.add('hidden');
+    updateBreadcrumb(['dashboard', 'settings']);
     // Refresh users list when opening settings if admin
     if(STATE.authUser && STATE.authUser.role === 'admin') {
       refreshUsersList();
@@ -759,6 +793,7 @@ function openPanel(name){
   else if(name === 'history') {
     document.getElementById('historyView').classList.remove('hidden');
     document.getElementById('adminToolbar')?.classList.add('hidden');
+    updateBreadcrumb(['dashboard', 'history']);
     renderHistory();
   }
 }
@@ -914,8 +949,22 @@ function renderManualsList(manuals){
         display: flex;
         flex-direction: column;
         gap: 12px;
+        position: relative;
         ${!isAdmin ? 'opacity: 0.95;' : ''}
       `;
+      
+      // PHASE 1: Add "New" or "Updated" badge
+      if (isNewManual(manual)) {
+        const badge = document.createElement('div');
+        badge.className = 'badge-new';
+        badge.textContent = 'Nuevo';
+        card.appendChild(badge);
+      } else if (isUpdatedManual(manual)) {
+        const badge = document.createElement('div');
+        badge.className = 'badge-updated';
+        badge.textContent = 'Actualizado';
+        card.appendChild(badge);
+      }
       
       // Hover effect
       card.addEventListener('mouseenter', () => {
@@ -1055,48 +1104,65 @@ function renderManualsList(manuals){
 function openManual(id){
   try{
     console.debug('openManual called', id);
-    let manual = findManualById(STATE.manuals,id);
-    if(!manual){
-      console.warn('Manual not found:', id);
-      pushNotification({title:'Manual no encontrado', text:`ID: ${id}`});
-      return;
-    }
-    // Normalize: convert 'content' field to 'steps' for frontend
-    // Ensure steps is properly set and is an array
-    if (!manual.steps || !Array.isArray(manual.steps)) {
-      const sourceArray = manual.content || manual.steps || [];
-      // If it's still not an array (might be string), try to parse
-      if (typeof sourceArray === 'string') {
-        try {
-          manual.steps = JSON.parse(sourceArray);
-        } catch (e) {
-          console.warn('[openManual] Failed to parse steps/content:', e);
-          manual.steps = [];
-        }
-      } else {
-        manual.steps = sourceArray;
+    
+    // PHASE 1: Show loading spinner
+    showLoadingSpinner('Cargando manual...');
+    
+    // Small delay to show spinner (simulating load time)
+    setTimeout(() => {
+      let manual = findManualById(STATE.manuals,id);
+      if(!manual){
+        hideLoadingSpinner();
+        console.warn('Manual not found:', id);
+        pushNotification({title:'Manual no encontrado', text:`ID: ${id}`});
+        return;
       }
-    }
-    // apply manual overrides (admin edits) if present
-    const overr = STATE.manualOverrides && STATE.manualOverrides[manual.id];
-    if(overr){ manual = Object.assign({}, manual, overr); }
-    STATE.current = manual;
-    
-    // Add to history
-    addToHistory(id);
-    renderHistory(); // Update history view in real-time
-    
-    // hide other list views so manual becomes the focused view
-    const ml = document.getElementById('manualsListView'); if(ml) ml.classList.add('hidden');
-    document.getElementById('welcome').classList.add('hidden');
-    document.getElementById('adminToolbar')?.classList.add('hidden'); // Hide floating toolbar when viewing manual (guarded)
-    els.manualView.classList.remove('hidden');
-    if (els.manualTitle) els.manualTitle.textContent = manual.title;
-    if (els.manualCategory) els.manualCategory.textContent = manual.category;
-    if (els.manualVersion) els.manualVersion.textContent = `v${manual.version}`;
-    renderSteps(manual);
-    renderComments(manual.id);
-    renderVersions(manual);
+      // Normalize: convert 'content' field to 'steps' for frontend
+      // Ensure steps is properly set and is an array
+      if (!manual.steps || !Array.isArray(manual.steps)) {
+        const sourceArray = manual.content || manual.steps || [];
+        // If it's still not an array (might be string), try to parse
+        if (typeof sourceArray === 'string') {
+          try {
+            manual.steps = JSON.parse(sourceArray);
+          } catch (e) {
+            console.warn('[openManual] Failed to parse steps/content:', e);
+            manual.steps = [];
+          }
+        } else {
+          manual.steps = sourceArray;
+        }
+      }
+      // apply manual overrides (admin edits) if present
+      const overr = STATE.manualOverrides && STATE.manualOverrides[manual.id];
+      if(overr){ manual = Object.assign({}, manual, overr); }
+      STATE.current = manual;
+      
+      // Add to history
+      addToHistory(id);
+      renderHistory(); // Update history view in real-time
+      
+      // PHASE 1: Update breadcrumb
+      updateBreadcrumb(['dashboard', 'manuals', 'manual']);
+      
+      // hide other list views so manual becomes the focused view
+      const ml = document.getElementById('manualsListView'); if(ml) ml.classList.add('hidden');
+      document.getElementById('welcome').classList.add('hidden');
+      document.getElementById('adminToolbar')?.classList.add('hidden'); // Hide floating toolbar when viewing manual (guarded)
+      els.manualView.classList.remove('hidden');
+      if (els.manualTitle) els.manualTitle.textContent = manual.title;
+      if (els.manualCategory) els.manualCategory.textContent = manual.category;
+      if (els.manualVersion) els.manualVersion.textContent = `v${manual.version}`;
+      
+      // PHASE 1: Restore active tab
+      switchManualTab(STATE.activeTab);
+      
+      renderSteps(manual);
+      renderComments(manual.id);
+      renderVersions(manual);
+      
+      // PHASE 1: Hide loading spinner
+      hideLoadingSpinner();
     // bring manual view into focus and top of viewport for clarity
     try{
       els.manualView.setAttribute('tabindex','-1');
@@ -3583,6 +3649,10 @@ function processJsonFile(file) {
 
 async function loadDiagrams() {
   console.log('🟢 [LOAD] loadDiagrams() LLAMADA');
+  
+  // PHASE 1: Show loading spinner
+  showLoadingSpinner('Cargando árboles de decisión...');
+  
   try {
     // Load from backend (PRIMARY STORAGE for all users)
     try {
@@ -3593,6 +3663,7 @@ async function loadDiagrams() {
         STATE.fibraDiagrams = diagrams;
         renderDiagramsList(diagrams || []);
         console.log(`✓ Diagramas cargados desde backend (${diagrams.length} items)`);
+        hideLoadingSpinner();
         return;
       }
     } catch (err) {
@@ -3610,6 +3681,8 @@ async function loadDiagrams() {
   } catch (err) {
     console.error('Error loading diagrams:', err);
     renderDiagramsList([]);
+  } finally {
+    hideLoadingSpinner();
   }
 }
 
@@ -5300,6 +5373,167 @@ function deleteDiagram(diagramId) {
   } catch (err) {
     console.error('Error in deleteDiagram:', err);
     alert('❌ Error: ' + err.message);
+  }
+}
+
+// ============================================================================
+// PHASE 1: UX/UI Improvements
+// ============================================================================
+
+// 1. Breadcrumb Navigation
+function updateBreadcrumb(path) {
+  STATE.breadcrumb = Array.isArray(path) ? path : [path];
+  const breadcrumbEl = document.getElementById('breadcrumb');
+  const listEl = breadcrumbEl?.querySelector('.breadcrumb-list');
+  
+  if (!listEl) return;
+  
+  listEl.innerHTML = '';
+  
+  STATE.breadcrumb.forEach((item, index) => {
+    const li = document.createElement('li');
+    li.className = 'breadcrumb-item';
+    
+    const link = document.createElement('a');
+    link.href = '#';
+    link.dataset.breadcrumb = item;
+    
+    // Format breadcrumb text
+    const labels = {
+      'dashboard': '🏠 Dashboard',
+      'manuals': '📚 Manuales',
+      'manual': '📖 Manual',
+      'fibra': '🌳 Árboles',
+      'diagram': '🌳 Árbol',
+      'history': '🕐 Historial',
+      'faqs': '❓ FAQs',
+      'settings': '⚙️ Ajustes'
+    };
+    
+    link.textContent = labels[item] || item;
+    
+    if (index < STATE.breadcrumb.length - 1) {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        navigateToBreadcrumb(item);
+      });
+    }
+    
+    li.appendChild(link);
+    listEl.appendChild(li);
+  });
+}
+
+function navigateToBreadcrumb(target) {
+  if (target === 'dashboard') {
+    openPanel('dashboard');
+    updateBreadcrumb(['dashboard']);
+  } else if (target === 'manuals') {
+    openPanel('manuals');
+    updateBreadcrumb(['dashboard', 'manuals']);
+  } else if (target === 'fibra') {
+    openPanel('fibra');
+    updateBreadcrumb(['dashboard', 'fibra']);
+  } else if (target === 'history') {
+    openPanel('history');
+    updateBreadcrumb(['dashboard', 'history']);
+  } else if (target === 'faqs') {
+    openPanel('faqs');
+    updateBreadcrumb(['dashboard', 'faqs']);
+  } else if (target === 'settings') {
+    openPanel('settings');
+    updateBreadcrumb(['dashboard', 'settings']);
+  }
+}
+
+// 2. Loading Spinners
+function showLoadingSpinner(message = 'Cargando...') {
+  hideLoadingSpinner(); // Remove any existing spinner
+  
+  const overlay = document.createElement('div');
+  overlay.className = 'loading-overlay';
+  overlay.id = 'loadingOverlay';
+  
+  overlay.innerHTML = `
+    <div class="loading-content">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">${escapeHtml(message)}</div>
+    </div>
+  `;
+  
+  document.body.appendChild(overlay);
+}
+
+function hideLoadingSpinner() {
+  const overlay = document.getElementById('loadingOverlay');
+  if (overlay) {
+    overlay.remove();
+  }
+}
+
+// 3. Manual Tabs
+function switchManualTab(tabName) {
+  STATE.activeTab = tabName;
+  localStorage.setItem('cw:activeTab', tabName);
+  
+  // Update tab buttons
+  document.querySelectorAll('.manual-tab').forEach(tab => {
+    tab.classList.remove('active');
+    tab.setAttribute('aria-selected', 'false');
+  });
+  
+  const activeTab = document.getElementById(`tab-${tabName}`);
+  if (activeTab) {
+    activeTab.classList.add('active');
+    activeTab.setAttribute('aria-selected', 'true');
+  }
+  
+  // Update tab content
+  document.querySelectorAll('.manual-tab-content').forEach(content => {
+    content.classList.remove('active');
+  });
+  
+  const activeContent = document.getElementById(`tab-content-${tabName}`);
+  if (activeContent) {
+    activeContent.classList.add('active');
+  }
+}
+
+// 4. Badge Helpers
+function isNewManual(manual) {
+  if (!manual.created_at && !manual.createdAt) return false;
+  
+  const createdDate = new Date(manual.created_at || manual.createdAt);
+  const daysSinceCreated = (Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24);
+  
+  return daysSinceCreated <= 7; // New if created within last 7 days
+}
+
+function isUpdatedManual(manual) {
+  if (!manual.updated_at && !manual.updatedAt) return false;
+  if (isNewManual(manual)) return false; // Don't show "updated" if it's brand new
+  
+  const updatedDate = new Date(manual.updated_at || manual.updatedAt);
+  const daysSinceUpdated = (Date.now() - updatedDate.getTime()) / (1000 * 60 * 60 * 24);
+  
+  return daysSinceUpdated <= 3; // Updated if modified within last 3 days
+}
+
+// 5. Sidebar Toggle
+function toggleSidebar() {
+  STATE.sidebarCollapsed = !STATE.sidebarCollapsed;
+  localStorage.setItem('cw:sidebarCollapsed', JSON.stringify(STATE.sidebarCollapsed));
+  
+  const sidebar = document.querySelector('.sidebar');
+  if (sidebar) {
+    sidebar.classList.toggle('collapsed', STATE.sidebarCollapsed);
+  }
+}
+
+function restoreSidebarState() {
+  const sidebar = document.querySelector('.sidebar');
+  if (sidebar && STATE.sidebarCollapsed) {
+    sidebar.classList.add('collapsed');
   }
 }
 
