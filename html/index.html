@@ -22,6 +22,9 @@
 <body class="cw-root">
   <div class="app" id="app">
     <aside class="sidebar hidden" role="navigation" aria-label="Navegación principal">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Contraer/Expandir menú" title="Contraer/Expandir menú">
+        ‹
+      </button>
       <div class="brand">
         <h1 class="brand-name">Cableworld Dashboard</h1>
       </div>
@@ -64,6 +67,13 @@
       </header>
 
       <section class="content" id="content" aria-live="polite">
+        <!-- Breadcrumb Navigation -->
+        <nav id="breadcrumb" class="breadcrumb" aria-label="Breadcrumb">
+          <ol class="breadcrumb-list">
+            <li class="breadcrumb-item"><a href="#" data-breadcrumb="dashboard">Dashboard</a></li>
+          </ol>
+        </nav>
+
         <div class="canvas" id="canvas">
           <!-- Dashboard Overview Panel -->
           <article id="dashboardView" class="panel hidden">
@@ -543,25 +553,51 @@
               </div>
             </header>
 
+            <!-- Manual Tabs -->
+            <ul class="manual-tabs" role="tablist">
+              <li role="presentation">
+                <button class="manual-tab active" id="tab-steps" role="tab" aria-selected="true" aria-controls="tab-content-steps">
+                  📋 Pasos
+                </button>
+              </li>
+              <li role="presentation">
+                <button class="manual-tab" id="tab-comments" role="tab" aria-selected="false" aria-controls="tab-content-comments">
+                  💬 Comentarios
+                </button>
+              </li>
+              <li role="presentation">
+                <button class="manual-tab" id="tab-history" role="tab" aria-selected="false" aria-controls="tab-content-history">
+                  📜 Historial
+                </button>
+              </li>
+            </ul>
 
+            <!-- Tab Content: Steps -->
+            <div id="tab-content-steps" class="manual-tab-content active" role="tabpanel" aria-labelledby="tab-steps">
+              <section id="manualSteps" class="steps">
+                <!-- Steps populated by JS -->
+              </section>
+            </div>
 
-            <section id="manualSteps" class="steps">
-              <!-- Steps populated by JS -->
-            </section>
+            <!-- Tab Content: Comments -->
+            <div id="tab-content-comments" class="manual-tab-content" role="tabpanel" aria-labelledby="tab-comments">
+              <section id="manualComments" class="comments" aria-label="Comentarios internos">
+                <h4>Comentarios internos</h4>
+                <div id="commentsList" class="comments-list"></div>
+                <div class="comment-input-group">
+                  <textarea id="commentInput" placeholder="Añadir comentario..." maxlength="500"></textarea>
+                  <button id="addComment" class="primary">Enviar</button>
+                </div>
+              </section>
+            </div>
 
-            <section id="manualComments" class="comments hidden" aria-label="Comentarios internos">
-              <h4>Comentarios internos</h4>
-              <div id="commentsList" class="comments-list"></div>
-              <div class="comment-input-group">
-                <textarea id="commentInput" placeholder="Añadir comentario..." maxlength="500"></textarea>
-                <button id="addComment" class="primary">Enviar</button>
-              </div>
-            </section>
-
-            <section id="versionsSection" class="versions hidden" aria-label="Historial de versiones">
-              <h4>Historial de versiones</h4>
-              <div id="versionsList" class="versions-list"></div>
-            </section>
+            <!-- Tab Content: History -->
+            <div id="tab-content-history" class="manual-tab-content" role="tabpanel" aria-labelledby="tab-history">
+              <section id="versionsSection" class="versions" aria-label="Historial de versiones">
+                <h4>Historial de versiones</h4>
+                <div id="versionsList" class="versions-list"></div>
+              </section>
+            </div>
 
           </article>
 
